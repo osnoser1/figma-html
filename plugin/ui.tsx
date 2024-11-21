@@ -56,7 +56,7 @@ import { Observable } from "@builder.io/sdk/dist/src/classes/observable.class";
 // https://stackoverflow.com/a/46634877
 type Writeable<T> = { -readonly [P in keyof T]: T[P] };
 
-export const apiHost = useDev ? "http://localhost:4000" : "https://builder.io";
+export const apiHost = useDev ? "http://localhost:8010" : "https://builder.io";
 amplitude.initialize();
 
 const selectionToBuilder = async (
@@ -236,12 +236,12 @@ export async function processImages(layer: Node) {
         }
 
         const isSvg = url.endsWith(".svg");
+        // Replace domain of the url with apiHost url
+        const proxyUrl = url.replace(/^https?:\/\/[^/]+/, `${apiHost}/proxy`);
 
         // Proxy returned content through Builder so we can access cross origin for
         // pulling in photos, etc
-        const res = await fetch(
-          `${apiHost}/api/v1/proxy-api?url=${encodeURIComponent(url)}`
-        );
+        const res = await fetch(proxyUrl);
 
         const contentType = res.headers.get("content-type");
         if (isSvg || contentType?.includes("svg")) {

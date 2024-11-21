@@ -25,7 +25,9 @@
       "https://*.openai.com",
       "https://ai-to-figma-tk43uighdq-uc.a.run.app",
       "https://imgur.com",
-      "http://localhost:4000"
+      "http://localhost:4000",
+      "http://localhost:8010",
+      "https://ai-builder-dev.mavity.co"
     ]
   }
 }

@@ -6,7 +6,7 @@ const path = require("path");
 module.exports = (env, argv) => {
   const baseConfig = {
     mode: argv.mode === "production" ? "production" : "development",
-    devtool: false,
+    devtool: argv.mode === 'production' ? false : 'inline-source-map',
     module: {
       rules: [
         { test: /\.tsx?$/, use: "ts-loader", exclude: /node_modules/ },

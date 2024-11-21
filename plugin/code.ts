@@ -187,21 +187,29 @@ const normalizeName = (str: string) =>
 const defaultFont = { family: "Roboto", style: "Regular" };
 
 // TODO: keep list of fonts not found
-async function getMatchingFont(fontStr: string, availableFonts: Font[]) {
-  const familySplit = fontStr.split(/\s*,\s*/);
+async function getMatchingFont(
+  fontNameStr: string,
+  fontWeight: string,
+  availableFonts: Font[]
+) {
+  const familySplit = fontNameStr.split(/\s*,\s*/);
 
   for (const family of familySplit) {
     const normalized = normalizeName(family);
     for (const availableFont of availableFonts) {
       const normalizedAvailable = normalizeName(availableFont.fontName.family);
-      if (normalizedAvailable === normalized) {
-        const cached = fontCache[normalizedAvailable];
+      if (
+        normalizedAvailable === normalized &&
+        availableFont.fontName.style === fontWeight
+      ) {
+        const cached = fontCache[`${normalizedAvailable}-${fontWeight}`];
         if (cached) {
           return cached;
         }
         await figma.loadFontAsync(availableFont.fontName);
-        fontCache[fontStr] = availableFont.fontName;
-        fontCache[normalizedAvailable] = availableFont.fontName;
+        fontCache[`${fontNameStr}-${fontWeight}`] = availableFont.fontName;
+        fontCache[`${normalizedAvailable}-${fontWeight}`] =
+          availableFont.fontName;
         return availableFont.fontName;
       }
     }
@@ -210,7 +218,7 @@ async function getMatchingFont(fontStr: string, availableFonts: Font[]) {
   return defaultFont;
 }
 
-const fontCache: { [key: string]: FontName | undefined } = {};
+const fontCache: { [fontNameAndWeight: string]: FontName | undefined } = {};
 
 async function serialize(
   element: any,
@@ -515,9 +523,7 @@ figma.ui.onmessage = async (msg) => {
   }
 
   if (msg.type === "import") {
-    const availableFonts = (await figma.listAvailableFontsAsync()).filter(
-      (font) => font.fontName.style === "Regular"
-    );
+    const availableFonts = await figma.listAvailableFontsAsync();
     await figma.loadFontAsync(defaultFont);
     const { data } = msg;
     const { layers } = data;
@@ -575,13 +581,16 @@ figma.ui.onmessage = async (msg) => {
             ((parent && (parent as any).ref) || baseFrame).appendChild(rect);
           } else if (layer.type == "TEXT") {
             const text = figma.createText();
+            const fontWeight = layer.fontWeight ?? "Regular";
+            delete layer.fontWeight;
             if (layer.fontFamily) {
-              const cached = fontCache[layer.fontFamily];
+              const cached = fontCache[`${layer.fontFamily}-${fontWeight}`];
               if (cached) {
                 text.fontName = cached;
               } else {
                 const family = await getMatchingFont(
-                  layer.fontFamily || "",
+                  layer.fontFamily ?? "",
+                  fontWeight,
                   availableFonts
                 );
                 text.fontName = family;
