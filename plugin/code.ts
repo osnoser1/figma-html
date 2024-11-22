@@ -311,6 +311,10 @@ function assign(a: BaseNode & AnyStringMap, b: AnyStringMap) {
       ["width", "height", "type", "ref", "children", "svg"].indexOf(key) === -1
     ) {
       try {
+        if (key === "textAlignHorizontal") {
+          a.textAutoResize = "HEIGHT";
+        }
+
         a[key] = b[key];
       } catch (err) {
         console.warn(`Assign error for property "${key}"`, a, b, err);
