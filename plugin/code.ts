@@ -556,12 +556,26 @@ figma.ui.onmessage = async (msg) => {
           } else if (layer.type === "SVG") {
             const node = figma.createNodeFromSvg(layer.svg);
             node.x = layer.x;
-            node.y = layer.y;
-            node.resize(layer.width || 1, layer.height || 1);
+            const coverMode =
+              layer.constraints.horizontal === "CENTER" &&
+              layer.constraints.vertical === "CENTER";
+            if (coverMode) {
+              node.resize(
+                layer.width || 1,
+                (node.height * (layer.width || 1)) / node.width
+              );
+            } else {
+              node.y = layer.y;
+              node.resize(layer.width || 1, layer.height || 1);
+            }
             layer.ref = node;
             rects.push(node);
             assign(node, layer);
             ((parent && (parent as any).ref) || baseFrame).appendChild(node);
+            if (coverMode) {
+              // Center the node vertically
+              node.y = layer.y + (layer.height || 1) / 2 - node.height / 2;
+            }
           } else if (layer.type === "RECTANGLE") {
             const rect = figma.createRectangle();
             const imageFills = getImageFills(layer);
